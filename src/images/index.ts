@@ -28,11 +28,19 @@ function getHistoricalThanksgivings(currentYear: number): string[] {
   return cachedThanksgivingDates;
 }
 async function getNextImage(history: string[] = []): Promise<RandomImage> {
+  if (process.env.IMAGE_TO_POST) {
+    const preSelectedPath = process.env.IMAGE_TO_POST;
+    console.log(`Using pre-selected image from GitHub Action: ${preSelectedPath}`);
+    return {
+      imageName: path.basename(preSelectedPath),
+      absolutePath: path.resolve(process.cwd(), preSelectedPath)
+    };
+  }
   const now = new Date();
   const parts = dateFormatter.formatToParts(now);
   const month = parts.find(p => p.type === 'month')?.value;
   const day = parts.find(p => p.type === 'day')?.value;
-  const year = parseInt(parts.find(p => p.type === 'year')?.value || '2025');
+  const year = parseInt(parts.find(p => p.type === 'year')?.value || '2026');
   const dateString = `${month}-${day}`;
   const todayHolidays = hd.isHoliday(now);
   const isThanksgiving = Array.isArray(todayHolidays) && todayHolidays.some((h: any) => h.name === 'Thanksgiving Day');

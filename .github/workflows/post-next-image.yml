@@ -10,18 +10,17 @@ jobs:
     name: Post Next Image
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       actions: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          filter: blob:none
-          fetch-depth: 1
-          sparse-checkout-cone-mode: false
           sparse-checkout: |
             /*
             !imagequeue
+          sparse-checkout-cone-mode: false
+          fetch-depth: 1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,25 +37,20 @@ jobs:
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
           GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run: |
-          IMAGE_LIST=$(gh variable get LAST_IMAGE_NAME || echo "")
+          HISTORY_LIST=$(gh variable get LAST_IMAGE_NAME || echo "")
+          echo "scanning catalogue..."
+          ALL_IMAGES=$(git ls-tree -r HEAD:imagequeue --name-only)
+          SELECTED_IMAGE=$(echo "$ALL_IMAGES" | grep -vFf <(echo "$HISTORY_LIST" | tr ',' '\n') | shuf -n 1)
+          if [ -z "$SELECTED_IMAGE" ]; then
+            echo "FATAL: you fucked it"
+            exit 1
+          fi
+          echo "Selected for posting: $SELECTED_IMAGE"
           mkdir -p imagequeue
-          if [ -n "$IMAGE_LIST" ]; then
-            IFS=',' read -ra ADDR <<< "$IMAGE_LIST"
-            for img in "${ADDR[@]}"; do
-              img_clean=$(echo "$img" | xargs)
-              if [ -n "$img_clean" ]; then
-                echo "Fetching: $img_clean"
-                git sparse-checkout add "imagequeue/$img_clean"
-                git checkout "imagequeue/$img_clean"
-              fi
-            done
-          fi
-          export LAST_IMAGE_NAME="$IMAGE_LIST"
-          NEW_LIST=$(yarn --silent run start | tail -n 1 | xargs)
-          if [ -n "$NEW_LIST" ] && [ "$NEW_LIST" != "$IMAGE_LIST" ]; then
-             echo "Updating image history for next run."
-             gh variable set LAST_IMAGE_NAME --body "$NEW_LIST"
-          else
-             echo "FATAL: history list not updated."
-             exit 1
-          fi
+          git sparse-checkout add "imagequeue/$SELECTED_IMAGE"
+          git checkout "imagequeue/$SELECTED_IMAGE"
+          export IMAGE_TO_POST="imagequeue/$SELECTED_IMAGE"
+          yarn --silent run start
+          NEW_HISTORY=$(echo "$SELECTED_IMAGE,$HISTORY_LIST" | tr ',' '\n' | grep -v '^$' | head -n 24 | paste -sd "," -)
+          echo "Updating history variable..."
+          gh variable set LAST_IMAGE_NAME --body "$NEW_HISTORY"
