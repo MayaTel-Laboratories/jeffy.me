@@ -38,21 +38,25 @@ jobs:
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
           GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run: |
-          CURRENT_IMAGE=$(gh variable get LAST_IMAGE_NAME || echo "")
-          if [ -z "$CURRENT_IMAGE" ]; then
-            echo "Error: LAST_IMAGE_NAME variable is empty."
-            exit 1
-          fi
+          IMAGE_LIST=$(gh variable get LAST_IMAGE_NAME || echo "")
           mkdir -p imagequeue
-          git sparse-checkout add "imagequeue/$CURRENT_IMAGE"
-          git checkout "imagequeue/$CURRENT_IMAGE"
-          export LAST_IMAGE_NAME="$CURRENT_IMAGE"
-          echo "Current: $CURRENT_IMAGE"
-          NEW_IMAGE=$(yarn --silent run start)
-          if [ -n "$NEW_IMAGE" ] && [ "$NEW_IMAGE" != "$CURRENT_IMAGE" ]; then
-            echo "Success. Setting next image to: $NEW_IMAGE"
-            gh variable set LAST_IMAGE_NAME --body "$NEW_IMAGE"
+          if [ -n "$IMAGE_LIST" ]; then
+            IFS=',' read -ra ADDR <<< "$IMAGE_LIST"
+            for img in "${ADDR[@]}"; do
+              img_clean=$(echo "$img" | xargs)
+              if [ -n "$img_clean" ]; then
+                echo "Fetching: $img_clean"
+                git sparse-checkout add "imagequeue/$img_clean"
+                git checkout "imagequeue/$img_clean"
+              fi
+            done
+          fi
+          export LAST_IMAGE_NAME="$IMAGE_LIST"
+          NEW_LIST=$(yarn --silent run start | tail -n 1 | xargs)
+          if [ -n "$NEW_LIST" ] && [ "$NEW_LIST" != "$IMAGE_LIST" ]; then
+             echo "Updating image history for next run."
+             gh variable set LAST_IMAGE_NAME --body "$NEW_LIST"
           else
-            echo "Error: Script failed to rotate image. (New: '$NEW_IMAGE')"
-            exit 1
+             echo "FATAL: history list not updated."
+             exit 1
           fi
