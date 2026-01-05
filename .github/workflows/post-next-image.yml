@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-            - name: Poast!
+      - name: Poast!
         env:
           BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
@@ -51,7 +51,7 @@ jobs:
           git checkout "imagequeue/$SELECTED_IMAGE"
           export IMAGE_TO_POST="imagequeue/$SELECTED_IMAGE"
           yarn --silent run start
-          echo "" # Adds a clean break between script output and variable update
+          echo "" # Corrected output line break
           NEW_HISTORY=$(echo "$SELECTED_IMAGE,$HISTORY_LIST" | tr ',' '\n' | grep -v '^$' | head -n 24 | paste -sd "," -)
           echo "Updating history variable..."
           gh variable set LAST_IMAGE_NAME --body "$NEW_HISTORY"
