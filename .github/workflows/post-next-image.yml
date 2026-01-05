@@ -10,17 +10,23 @@ jobs:
     name: Post Next Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4 # Upgraded from v2
-
+      - name: Checkout repository (Excluding imagequeue)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          sparse-checkout-cone-mode: false 
+          sparse-checkout: |
+            /*
+            !imagequeue
+            
       - name: Setup Node.js and Cache
-        uses: actions/setup-node@v4 # Upgraded from v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'yarn'
 
       - name: Install dependencies
-        run: yarn install --immutable 
+        run: yarn install --immutable
 
       - name: Do the post
         env:
