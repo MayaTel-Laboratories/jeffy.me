@@ -9,8 +9,11 @@ jobs:
   post-next-image:
     name: Post Next Image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     steps:
-      - name: heckout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           filter: blob:none
@@ -33,19 +36,19 @@ jobs:
         env:
           BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
+          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
           LAST_IMAGE_NAME: ${{ vars.LAST_IMAGE_NAME }}
         run: |
           mkdir -p imagequeue
-          SINGLE_IMAGE_NAME=$(echo "$LAST_IMAGE_NAME" | cut -d',' -f1)
-          git sparse-checkout add "imagequeue/$SINGLE_IMAGE_NAME"
-          git checkout "imagequeue/$SINGLE_IMAGE_NAME"
-          echo "Processing image: $SINGLE_IMAGE_NAME"
+          CURRENT_IMAGE=$(echo "$LAST_IMAGE_NAME" | cut -d',' -f1)
+          git sparse-checkout add "imagequeue/$CURRENT_IMAGE"
+          git checkout "imagequeue/$CURRENT_IMAGE"
+          echo "Current image being posted: $CURRENT_IMAGE"
           NEW_IMAGE=$(yarn --silent run start)
-          echo "NEW_LAST_IMAGE_NAME=$NEW_IMAGE" >> $GITHUB_ENV
-
-      - name: Update repository variable
-        uses: action-pack/set-variable@v1
-        with:
-          name: 'LAST_IMAGE_NAME'
-          value: ${{ env.NEW_LAST_IMAGE_NAME }}
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          if [ -n "$NEW_IMAGE" ] && [ "$NEW_IMAGE" != "$CURRENT_IMAGE" ]; then
+            echo "Successfully posted. Updating LAST_IMAGE_NAME to $NEW_IMAGE"
+            gh variable set LAST_IMAGE_NAME --body "$NEW_IMAGE"
+          else
+            echo "Error: Script returned same image or empty string ($NEW_IMAGE). Check script logic."
+            exit 1
+          fi
