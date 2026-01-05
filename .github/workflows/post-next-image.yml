@@ -10,7 +10,7 @@ jobs:
     name: Post Next Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: heckout
         uses: actions/checkout@v4
         with:
           filter: blob:none
@@ -20,7 +20,7 @@ jobs:
             /*
             !imagequeue
 
-      - name: Setup Node.js and Cache
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -36,11 +36,13 @@ jobs:
           LAST_IMAGE_NAME: ${{ vars.LAST_IMAGE_NAME }}
         run: |
           mkdir -p imagequeue
-          git sparse-checkout add "imagequeue/$LAST_IMAGE_NAME"
-          git checkout "imagequeue/$LAST_IMAGE_NAME"
-          echo "Previous image name: $LAST_IMAGE_NAME"
-          NEW_LAST_IMAGE_NAME=$(yarn --silent run start)
-          echo "NEW_LAST_IMAGE_NAME=$NEW_LAST_IMAGE_NAME" >> $GITHUB_ENV
+          SINGLE_IMAGE_NAME=$(echo "$LAST_IMAGE_NAME" | cut -d',' -f1)
+          git sparse-checkout add "imagequeue/$SINGLE_IMAGE_NAME"
+          git checkout "imagequeue/$SINGLE_IMAGE_NAME"
+          echo "Processing image: $SINGLE_IMAGE_NAME"
+          NEW_IMAGE=$(yarn --silent run start)
+          echo "NEW_LAST_IMAGE_NAME=$NEW_IMAGE" >> $GITHUB_ENV
+
       - name: Update repository variable
         uses: action-pack/set-variable@v1
         with:
