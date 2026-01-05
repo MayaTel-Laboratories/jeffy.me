@@ -32,23 +32,27 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Poast!!
+      - name: Poast!
         env:
           BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
           GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-          LAST_IMAGE_NAME: ${{ vars.LAST_IMAGE_NAME }}
         run: |
+          CURRENT_IMAGE=$(gh variable get LAST_IMAGE_NAME || echo "")
+          if [ -z "$CURRENT_IMAGE" ]; then
+            echo "Error: LAST_IMAGE_NAME variable is empty."
+            exit 1
+          fi
           mkdir -p imagequeue
-          CURRENT_IMAGE=$(echo "$LAST_IMAGE_NAME" | cut -d',' -f1)
           git sparse-checkout add "imagequeue/$CURRENT_IMAGE"
           git checkout "imagequeue/$CURRENT_IMAGE"
-          echo "Current image being posted: $CURRENT_IMAGE"
+          export LAST_IMAGE_NAME="$CURRENT_IMAGE"
+          echo "Current: $CURRENT_IMAGE"
           NEW_IMAGE=$(yarn --silent run start)
           if [ -n "$NEW_IMAGE" ] && [ "$NEW_IMAGE" != "$CURRENT_IMAGE" ]; then
-            echo "Successfully posted. Updating LAST_IMAGE_NAME to $NEW_IMAGE"
+            echo "Success. Setting next image to: $NEW_IMAGE"
             gh variable set LAST_IMAGE_NAME --body "$NEW_IMAGE"
           else
-            echo "Error: Script returned same image or empty string ($NEW_IMAGE). Check script logic."
+            echo "Error: Script failed to rotate image. (New: '$NEW_IMAGE')"
             exit 1
           fi
