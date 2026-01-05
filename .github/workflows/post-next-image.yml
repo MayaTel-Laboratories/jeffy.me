@@ -53,5 +53,5 @@ jobs:
           yarn --silent run start
           echo "" # Corrected output line break
           NEW_HISTORY=$(echo "$SELECTED_IMAGE,$HISTORY_LIST" | tr ',' '\n' | grep -v '^$' | head -n 24 | paste -sd "," -)
-          echo "Updating history variable..."
+          echo "updating the no-no list..."
           gh variable set LAST_IMAGE_NAME --body "$NEW_HISTORY"

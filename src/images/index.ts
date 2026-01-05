@@ -30,7 +30,7 @@ function getHistoricalThanksgivings(currentYear: number): string[] {
 async function getNextImage(history: string[] = []): Promise<RandomImage> {
   if (process.env.IMAGE_TO_POST) {
     const preSelectedPath = process.env.IMAGE_TO_POST;
-    console.log(`Using pre-selected image from GitHub Action: ${preSelectedPath}`);
+    console.log(`hello, index.ts here. i'm confirming that the RNG has selected ${preSelectedPath}`);
     return {
       imageName: path.basename(preSelectedPath),
       absolutePath: path.resolve(process.cwd(), preSelectedPath)
