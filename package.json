@@ -7,7 +7,7 @@
   "author": "Jason Prado <jason.prado@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "@atproto/api": "^0.3.12",
+    "@atproto/api": "^0.18.21",
     "date-holidays": "^3.23.14",
     "dotenv": "^16.3.1",
     "sharp": "^0.32.1"

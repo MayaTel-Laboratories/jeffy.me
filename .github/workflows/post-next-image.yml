@@ -33,6 +33,7 @@ jobs:
 
       - name: Poast!
         env:
+          NODE_OPTIONS: "--no-deprecation"
           BSKY_IDENTIFIER: ${{ secrets.BSKY_IDENTIFIER }}
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
           GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
