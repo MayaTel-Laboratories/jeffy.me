@@ -2,7 +2,7 @@ import { postImage } from './clients/at';
 import { getNextImage } from './images'; 
 import * as dotenv from 'dotenv';
 dotenv.config();
-const CUTOFF_DATE = new Date('1950-10-01T00:00:00');
+const CUTOFF_DATE = new Date('2000-01-01T00:00:00');
 const HISTORY_LIMIT = 24;
 function getDateFromFilename(filename: string): Date {
     const filenameNoJPG = filename.replace(/\.(JPG|jpeg|png|gif|bmp)$/i, "");
@@ -20,20 +20,20 @@ function formatFullDate(dateObj: Date): string {
 function generateAltText(dateObj: Date): string {
     const formattedDate = formatFullDate(dateObj);
     if (dateObj < CUTOFF_DATE) {
-        return 'A Li\'l Folks comic strip, drawn by Charles M. Schulz and credited to "Sparky", originally released ' + formattedDate;
+        return 'A Family Circus comic strip, drawn by Bil Keane, originally released ' + formattedDate;
     } else {
-        return 'A Peanuts comic strip, drawn by Charles M. Schulz, originally released ' + formattedDate;
+        return 'A Family Circus comic strip, drawn by Bil and Jeff Keane, originally released ' + formattedDate;
     }
 }
 function generateCaption(dateObj: Date): string {
   const formattedDate = formatFullDate(dateObj);
   if (dateObj < CUTOFF_DATE) {
-    return 'Li\'l Folks by "Sparky": ' + formattedDate;
+    return 'Family Circus by Bil Keane: ' + formattedDate;
   } else {
     if (dateObj.getDay() === 0) {
-      return 'Sunday Peanuts by Schulz: ' + formattedDate; 
+      return 'Sunday Family Circus by Bil and Jeff Keane: ' + formattedDate; 
     } else {
-      return 'Peanuts by Schulz: ' + formattedDate; 
+      return 'Family Circus by Bil and Jeff Keane: ' + formattedDate; 
     }
   }
 }
